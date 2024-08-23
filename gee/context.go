@@ -17,6 +17,9 @@ type Context struct{
 	Params map[string]string
 
 	StatusCode int
+
+	handlers []HandlerFunc
+	index int
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context{
@@ -25,7 +28,27 @@ func newContext(w http.ResponseWriter, r *http.Request) *Context{
 		Req: r,
 		Method: r.Method,
 		Path: r.URL.Path,
+		index: -1,
 	}
+}
+
+func (context *Context)Next(){
+	context.index++;
+	s := len(context.handlers)
+	//不是所有的handler都会调用 Next()。
+	//手工调用 Next()，一般用于在请求前后各实现一些行为。如果中间件只作用于请求前，可以省略调用Next()，此种写法可以兼容 不调用Next的写法
+	//并且使用c.index<s;c.index++ 也能保证中间件只执行一次
+	//当中间件不调用 next函数时,通过此循环保证中间件执行顺序
+	//当中间件调用next 函数时,且当中间件执行完毕,对应c.index也已经到达指定index
+	//前面存在的for循环因为是通过c.index<s 做循环判断,则不会重复执行已经执行过的中间件
+	for ; context.index < s; context.index++{
+		context.handlers[context.index](context)
+	}
+}
+
+func (context *Context) Fail(code int, err string) {
+	context.index = len(context.handlers)
+	context.JSON(code, H{"message": err})
 }
 
 func (context *Context) Param(key string)string{

@@ -67,10 +67,13 @@ func (router *router) handle(ctx *Context) {
 		ctx.Params = params
 		//重新组合key "GET-go/doc" => "GET-:lang/doc"
 		key := ctx.Method + "-" + node.pattern
-		router.handlers[key](ctx)  
+		ctx.handlers = append(ctx.handlers,router.handlers[key])
 	}else{
-		ctx.STRING(http.StatusNotFound, "404 NOT FOUND: %s\n", ctx.Path)
+		ctx.handlers = append(ctx.handlers, func(ctx *Context) {
+			ctx.STRING(http.StatusNotFound, "404 NOT FOUND: %s\n", ctx.Path)
+		})
 	}
+	ctx.Next()
 }
 
 // 模式串解析
