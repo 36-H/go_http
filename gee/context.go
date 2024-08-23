@@ -11,15 +11,18 @@ type H map[string]interface{}
 type Context struct{
 	Writer http.ResponseWriter
 	Req *http.Request
-
+	//请求参数 已解析
 	Method string
 	Path string
 	Params map[string]string
-
+	//响应状态码
 	StatusCode int
-
+	//中间件
 	handlers []HandlerFunc
 	index int
+
+	// 引擎指针
+	engine *Engine
 }
 
 func newContext(w http.ResponseWriter, r *http.Request) *Context{
@@ -105,5 +108,13 @@ func (context *Context)HTML(code int, html string){
 	context.SetHeader("Content-Type","text/html")
 	context.Status(code)
 	context.Writer.Write([]byte(html))
+}
+
+func (context *Context) HTML_TEMPLATE(code int, name string, data interface{}) {
+	context.SetHeader("Content-Type", "text/html")
+	context.Status(code)
+	if err := context.engine.htmlTemplates.ExecuteTemplate(context.Writer, name, data); err != nil {
+		context.Fail(500, err.Error())
+	}
 }
 
