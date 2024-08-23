@@ -23,17 +23,16 @@ func (n *node) matchChild(part string) *node {
 }
 
 func (n *node) matchChildren(part string) []*node {
-	nodes := make([]*node ,0)
+	nodes := make([]*node, 0)
 	for _, child := range n.children {
 		if child.part == part || child.isWild {
-			nodes = append(nodes,child )
+			nodes = append(nodes, child)
 		}
 	}
 	return nodes
 }
 
-
-func (n *node) insert(pattern string, parts []string, height int){
+func (n *node) insert(pattern string, parts []string, height int) {
 	if len(parts) == height {
 		n.pattern = pattern
 		return
@@ -42,16 +41,16 @@ func (n *node) insert(pattern string, parts []string, height int){
 	part := parts[height]
 	child := n.matchChild(part)
 
-	if child == nil{
+	if child == nil {
 		child = &node{
-			part: part,
+			part:   part,
 			isWild: part[0] == ':' || part[0] == '*',
 		}
 		//如果 children == nil append会使用make进行初始化
 		n.children = append(n.children, child)
 	}
 
-	child.insert(pattern,parts,height + 1)
+	child.insert(pattern, parts, height+1)
 }
 
 func (n *node) search(parts []string, height int) *node {
@@ -75,4 +74,3 @@ func (n *node) search(parts []string, height int) *node {
 
 	return nil
 }
-

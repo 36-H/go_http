@@ -56,6 +56,13 @@ func New() *Engine {
 	return engine
 }
 
+// 默认处理引擎 增加log recovery两个中间件
+func Default() *Engine {
+	engine := New()
+	engine.Use(Logger(), Recovery())
+	return engine
+}
+
 func (group *RouterGroup) addRoute(method string, comp string, handler HandlerFunc) {
 	pattern := group.prefix + comp
 	group.engine.router.addRoute(method, pattern, handler)
@@ -94,7 +101,7 @@ func (group *RouterGroup) Static(relativePath string, root string) {
 	urlPattern := path.Join(relativePath, "/*filepath")
 	// 注册处理器
 	group.GET(urlPattern, handler)
-}	
+}
 
 func (engine *Engine) Run(addr string) (err error) {
 	return http.ListenAndServe(addr, engine)
