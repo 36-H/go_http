@@ -72,7 +72,7 @@ func (fifo *Fifo) RemoveOldest() {
 }
 
 // 长度
-func (fifo *Fifo) Len() int{
+func (fifo *Fifo) Len() int {
 	return fifo.ll.Len()
 }
 
@@ -82,7 +82,7 @@ func (fifo *Fifo) Size() int {
 }
 
 // 总容量
-func (fifo *Fifo) Capacity() int{
+func (fifo *Fifo) Capacity() int {
 	return fifo.maxBytes
 }
 

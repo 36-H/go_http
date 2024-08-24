@@ -5,6 +5,7 @@ import (
 
 	"github.com/matryer/is"
 )
+
 func TestSetGet(t *testing.T) {
 	is := is.New(t)
 

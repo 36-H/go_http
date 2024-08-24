@@ -5,9 +5,9 @@ import (
 	"runtime"
 )
 
-type CacheType interface{
+type CacheType interface {
 	//增改
-	Put(key string,value interface{})
+	Put(key string, value interface{})
 	//查
 	Get(key string) interface{}
 	//删
@@ -27,11 +27,11 @@ type Entry struct {
 	Value interface{}
 }
 
-type Value interface{
+type Value interface {
 	Len() int
 }
 
-func Len(value interface{}) int{
+func Len(value interface{}) int {
 	// 不能使用如下方法统计 他会统计成interface{} 16字节
 	// return int64(unsafe.Sizeof(value))
 	var n int
