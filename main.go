@@ -1,20 +1,30 @@
 package main
 
 import (
-	"gee"
+	"fmt"
+	"geeCache"
+	"log"
 	"net/http"
 )
 
-func main() {
-	r := gee.Default()
-	r.GET("/", func(c *gee.Context) {
-		c.STRING(http.StatusOK, "Hello Helios\n")
-	})
-	// index out of range for testing Recovery()
-	r.GET("/panic", func(c *gee.Context) {
-		names := []string{"Helios"}
-		c.STRING(http.StatusOK, names[100])
-	})
+var db = map[string]string{
+	"Tom":  "630",
+	"Jack": "589",
+	"Sam":  "567",
+}
 
-	r.Run(":9999")
+func main() {
+	geecache.NewGroup("scores", 2<<10, geecache.GetterFunc(
+		func(key string) ([]byte, error) {
+			log.Println("[SlowDB] search key", key)
+			if v, ok := db[key]; ok {
+				return []byte(v), nil
+			}
+			return nil, fmt.Errorf("%s not exist", key)
+		}),nil,geecache.LRU)
+
+	addr := "localhost:9999"
+	peers := geecache.NewHTTPPool(addr)
+	log.Println("geecache is running at", addr)
+	log.Fatal(http.ListenAndServe(addr, peers))
 }
