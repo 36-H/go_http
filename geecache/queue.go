@@ -1,17 +1,16 @@
-package lfu
+package geecache
 
 import (
 	"container/heap"
-	"core"
 )
 
-type entry struct {
-	core.Entry
+type lfu_entry struct {
+	entry
 	weight int
 	index  int
 }
 
-type queue []*entry
+type queue []*lfu_entry
 
 func (q queue) Len() int {
 	return len(q)
@@ -29,7 +28,7 @@ func (q queue) Swap(i, j int) {
 
 func (q *queue) Push(x interface{}) {
 	n := len(*q)
-	en := x.(*entry)
+	en := x.(*lfu_entry)
 	en.index = n
 	*q = append(*q, en)
 }
@@ -44,7 +43,7 @@ func (q *queue) Pop() interface{} {
 	return en
 }
 
-func (q *queue) update(en *entry, value interface{}, weight int) {
+func (q *queue) update(en *lfu_entry, value interface{}, weight int) {
 	en.Value = value
 	en.weight = weight
 	heap.Fix(q, en.index)

@@ -1,8 +1,7 @@
-package lru
+package geecache
 
 import (
 	"container/list"
-	"core"
 )
 
 type Lru struct {
@@ -19,7 +18,7 @@ type Lru struct {
 }
 
 // New 创建一个新的 Cache，如果 maxBytes 是 0，表示没有容量限制
-func New(maxBytes int, onEvicted func(key string, value interface{})) core.CacheType {
+func NewLRU(maxBytes int, onEvicted func(key string, value interface{})) cacheType {
 	return &Lru{
 		maxBytes:  maxBytes,
 		onEvicted: onEvicted,
@@ -32,18 +31,18 @@ func New(maxBytes int, onEvicted func(key string, value interface{})) core.Cache
 func (lru *Lru) Put(key string, value interface{}) {
 	if e, ok := lru.cache[key]; ok {
 		lru.ll.MoveToBack(e)
-		en := e.Value.(*core.Entry)
-		lru.usedBytes = lru.usedBytes - core.Len(en.Value) + core.Len(value)
+		en := e.Value.(*entry)
+		lru.usedBytes = lru.usedBytes - Len(en.Value) + Len(value)
 		en.Value = value
 		return
 	}
 
-	en := &core.Entry{Key: key, Value: value}
+	en := &entry{Key: key, Value: value}
 	e := lru.ll.PushBack(en)
 	lru.cache[key] = e
 	// fmt.Printf("当前使用容量:%d,",Lru.usedBytes)
-	// fmt.Printf("即将加入缓存的字节数:%d,缓存类型:%T,",core.Len(en.Value),value)
-	lru.usedBytes += core.Len(en.Value)
+	// fmt.Printf("即将加入缓存的字节数:%d,缓存类型:%T,",cachetype.Len(en.Value),value)
+	lru.usedBytes += Len(en.Value)
 	// fmt.Printf("新使用容量:%d\n",Lru.usedBytes)
 	for lru.maxBytes > 0 && lru.usedBytes > lru.maxBytes {
 		lru.RemoveOldest()
@@ -51,13 +50,13 @@ func (lru *Lru) Put(key string, value interface{}) {
 }
 
 // 查
-func (lru *Lru) Get(key string) interface{} {
+func (lru *Lru) Get(key string) (interface{}, bool) {
 	if e, ok := lru.cache[key]; ok {
 		lru.ll.MoveToBack(e)
-		return e.Value.(*core.Entry).Value
+		return e.Value.(*entry).Value, true
 	}
 
-	return nil
+	return nil, false
 }
 
 // 删
@@ -93,8 +92,8 @@ func (lru *Lru) removeElement(e *list.Element) {
 	}
 
 	lru.ll.Remove(e)
-	en := e.Value.(*core.Entry)
-	lru.usedBytes -= core.Len(en.Value)
+	en := e.Value.(*entry)
+	lru.usedBytes -= Len(en.Value)
 	delete(lru.cache, en.Key)
 
 	if lru.onEvicted != nil {

@@ -1,8 +1,7 @@
-package lfu
+package geecache
 
 import (
 	"container/heap"
-	"core"
 )
 
 type Lfu struct {
@@ -15,51 +14,50 @@ type Lfu struct {
 	usedBytes int
 
 	queue *queue
-	cache map[string]*entry
+	cache map[string]*lfu_entry
 }
 
 // New 创建一个新的 Cache，如果 maxBytes 是 0，表示没有容量限制
-func New(maxBytes int, onEvicted func(key string, value interface{})) core.CacheType {
+func NewLFU(maxBytes int, onEvicted func(key string, value interface{})) cacheType {
 	q := make(queue, 0, 1024)
 	return &Lfu{
 		maxBytes:  maxBytes,
 		onEvicted: onEvicted,
 		queue:     &q,
-		cache:     make(map[string]*entry),
+		cache:     make(map[string]*lfu_entry),
 	}
 }
 
 // Set 往 Cache 增加一个元素（如果已经存在，更新值，并增加权重，重新构建堆）
 func (lfu *Lfu) Put(key string, value interface{}) {
 	if e, ok := lfu.cache[key]; ok {
-		lfu.usedBytes = lfu.usedBytes - core.Len(e.Value) + core.Len(value)
+		lfu.usedBytes = lfu.usedBytes - Len(e.Value) + Len(value)
 		lfu.queue.update(e, value, e.weight+1)
 		return
 	}
 
-	en := &entry{
-		Entry: core.Entry{
-			Key: key,
+	en := &lfu_entry{
+		entry: entry{
+			Key:   key,
 			Value: value,
 		},
 	}
 	heap.Push(lfu.queue, en)
 	lfu.cache[key] = en
-
-	lfu.usedBytes += core.Len(en.Value)
+	lfu.usedBytes += Len(en.Value)
 	if lfu.maxBytes > 0 && lfu.usedBytes > lfu.maxBytes {
 		lfu.removeElement(heap.Pop(lfu.queue))
 	}
 }
 
 // Get 从 cache 中获取 key 对应的值，nil 表示 key 不存在
-func (lfu *Lfu) Get(key string) interface{} {
+func (lfu *Lfu) Get(key string) (interface{}, bool) {
 	if e, ok := lfu.cache[key]; ok {
-		lfu.queue.update(e, e.Value, e.weight + 1)
-		return e.Value
+		lfu.queue.update(e, e.Value, e.weight+1)
+		return e.Value, true
 	}
 
-	return nil
+	return nil, false
 }
 
 // Remove 从 cache 中删除 key 对应的元素
@@ -83,11 +81,11 @@ func (lfu *Lfu) removeElement(e interface{}) {
 		return
 	}
 
-	en := e.(*entry)
+	en := e.(*lfu_entry)
 
 	delete(lfu.cache, en.Key)
 
-	lfu.usedBytes -= core.Len(en.Value)
+	lfu.usedBytes -= Len(en.Value)
 
 	if lfu.onEvicted != nil {
 		lfu.onEvicted(en.Key, en.Value)

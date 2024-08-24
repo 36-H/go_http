@@ -1,8 +1,7 @@
-package fifo
+package geecache
 
 import (
 	"container/list"
-	"core"
 )
 
 type Fifo struct {
@@ -19,7 +18,7 @@ type Fifo struct {
 }
 
 // New 创建一个新的 Cache，如果 maxBytes 是 0，表示没有容量限制
-func New(maxBytes int, onEvicted func(key string, value interface{})) core.CacheType {
+func NewFIFO(maxBytes int, onEvicted func(key string, value interface{})) cacheType {
 	return &Fifo{
 		maxBytes:  maxBytes,
 		onEvicted: onEvicted,
@@ -32,18 +31,18 @@ func New(maxBytes int, onEvicted func(key string, value interface{})) core.Cache
 func (fifo *Fifo) Put(key string, value interface{}) {
 	if e, ok := fifo.cache[key]; ok {
 		fifo.ll.MoveToBack(e)
-		en := e.Value.(*core.Entry)
-		fifo.usedBytes = fifo.usedBytes - core.Len(en.Value) + core.Len(value)
+		en := e.Value.(*entry)
+		fifo.usedBytes = fifo.usedBytes - Len(en.Value) + Len(value)
 		en.Value = value
 		return
 	}
 
-	en := &core.Entry{Key: key, Value: value}
+	en := &entry{Key: key, Value: value}
 	e := fifo.ll.PushBack(en)
 	fifo.cache[key] = e
 	// fmt.Printf("当前使用容量:%d,",fifo.usedBytes)
-	// fmt.Printf("即将加入缓存的字节数:%d,缓存类型:%T,",core.Len(en.Value),value)
-	fifo.usedBytes += core.Len(en.Value)
+	// fmt.Printf("即将加入缓存的字节数:%d,缓存类型:%T,",Len(en.Value),value)
+	fifo.usedBytes += Len(en.Value)
 	// fmt.Printf("新使用容量:%d\n",fifo.usedBytes)
 	for fifo.maxBytes > 0 && fifo.usedBytes > fifo.maxBytes {
 		fifo.RemoveOldest()
@@ -51,12 +50,12 @@ func (fifo *Fifo) Put(key string, value interface{}) {
 }
 
 // 查
-func (fifo *Fifo) Get(key string) interface{} {
+func (fifo *Fifo) Get(key string) (interface{}, bool) {
 	if e, ok := fifo.cache[key]; ok {
-		return e.Value.(*core.Entry).Value
+		return e.Value.(*entry).Value,true
 	}
 
-	return nil
+	return nil,false
 }
 
 // 删
@@ -92,8 +91,8 @@ func (fifo *Fifo) removeElement(e *list.Element) {
 	}
 
 	fifo.ll.Remove(e)
-	en := e.Value.(*core.Entry)
-	fifo.usedBytes -= core.Len(en.Value)
+	en := e.Value.(*entry)
+	fifo.usedBytes -= Len(en.Value)
 	delete(fifo.cache, en.Key)
 
 	if fifo.onEvicted != nil {

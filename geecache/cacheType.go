@@ -1,15 +1,37 @@
-package core
+package geecache
 
 import (
 	"fmt"
 	"runtime"
 )
 
-type CacheType interface {
+type T string
+
+const (
+	FIFO T = "fifo"
+	LFU  T = "lfu"
+	LRU  T = "lru"
+)
+
+func (t T) String() string {
+	switch t {
+	case FIFO:
+		return "fifo"
+	case LFU:
+		return "lfu"
+	case LRU:
+		return "lru"
+	default:
+		return "lru"
+	}
+
+}
+
+type cacheType interface {
 	//增改
 	Put(key string, value interface{})
 	//查
-	Get(key string) interface{}
+	Get(key string) (interface{},bool)
 	//删
 	Remove(key string)
 	//淘汰
@@ -22,21 +44,21 @@ type CacheType interface {
 	Len() int
 }
 
-type Entry struct {
+type entry struct {
 	Key   string
 	Value interface{}
 }
 
-type Value interface {
+type value interface {
 	Len() int
 }
 
-func Len(value interface{}) int {
+func Len(val interface{}) int {
 	// 不能使用如下方法统计 他会统计成interface{} 16字节
 	// return int64(unsafe.Sizeof(value))
 	var n int
-	switch v := value.(type) {
-	case Value:
+	switch v := val.(type) {
+	case value:
 		n = v.Len()
 	case string:
 		if runtime.GOARCH == "amd64" {
@@ -63,7 +85,7 @@ func Len(value interface{}) int {
 	case complex128:
 		n = 16
 	default:
-		panic(fmt.Sprintf("%T is not implement core.Value", value))
+		panic(fmt.Sprintf("%T is not implement value", val))
 	}
 
 	return n

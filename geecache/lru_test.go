@@ -1,20 +1,19 @@
-package lru_test
+package geecache
 
 import (
-	"lru"
 	"testing"
 
 	"github.com/matryer/is"
 )
 
-func TestOnEvicted(t *testing.T) {
+func TestLRUOnEvicted(t *testing.T) {
 	is := is.New(t)
 
 	keys := make([]string, 0, 8)
 	onEvicted := func(key string, value interface{}) {
 		keys = append(keys, key)
 	}
-	cache := lru.New(16, onEvicted)
+	cache := NewLRU(16, onEvicted)
 
 	cache.Put("k1", 1)
 	cache.Put("k2", 2)
