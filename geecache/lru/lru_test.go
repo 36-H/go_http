@@ -1,7 +1,9 @@
-package lru
+package lru_test
 
 import (
+	"lru"
 	"testing"
+
 	"github.com/matryer/is"
 )
 
@@ -12,7 +14,7 @@ func TestOnEvicted(t *testing.T) {
 	onEvicted := func(key string, value interface{}) {
 		keys = append(keys, key)
 	}
-	cache := New(16, onEvicted)
+	cache := lru.New(16, onEvicted)
 
 	cache.Put("k1", 1)
 	cache.Put("k2", 2)

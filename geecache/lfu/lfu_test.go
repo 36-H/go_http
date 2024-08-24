@@ -1,23 +1,23 @@
-package fifo_test
+package lfu_test
 
 import (
-	"fifo"
+	"lfu"
 	"testing"
 
 	"github.com/matryer/is"
 )
 
-func TestSetGet(t *testing.T) {
+func TestSet(t *testing.T) {
 	is := is.New(t)
 
-	cache := fifo.New(24, nil)
+	cache := lfu.New(24, nil)
 	cache.RemoveOldest()
 	cache.Put("k1", 1)
 	v := cache.Get("k1")
 	is.Equal(v, 1)
 
 	cache.Remove("k1")
-	is.Equal(0, cache.Len()) // expect to be the same
+	is.Equal(0, cache.Len())
 
 	// cache.Set("k2", time.Now())
 }
@@ -29,16 +29,17 @@ func TestOnEvicted(t *testing.T) {
 	onEvicted := func(key string, value interface{}) {
 		keys = append(keys, key)
 	}
-	cache := fifo.New(16, onEvicted)
+	cache := lfu.New(16, onEvicted)
 
 	cache.Put("k1", 1)
 	cache.Put("k2", 2)
-	cache.Get("k1")
+	// cache.Get("k1")
+	// cache.Get("k1")
+	// cache.Get("k2")
 	cache.Put("k3", 3)
-	cache.Get("k1")
 	cache.Put("k4", 4)
 
-	expected := []string{"k1", "k2"}
+	expected := []string{"k1", "k3"}
 
 	is.Equal(expected, keys)
 	is.Equal(2, cache.Len())
