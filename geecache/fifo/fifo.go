@@ -45,7 +45,7 @@ func (fifo *Fifo) Put(key string, value interface{}) {
 	// fmt.Printf("即将加入缓存的字节数:%d,缓存类型:%T,",core.Len(en.Value),value)
 	fifo.usedBytes += core.Len(en.Value)
 	// fmt.Printf("新使用容量:%d\n",fifo.usedBytes)
-	if fifo.maxBytes > 0 && fifo.usedBytes > fifo.maxBytes {
+	for fifo.maxBytes > 0 && fifo.usedBytes > fifo.maxBytes {
 		fifo.RemoveOldest()
 	}
 }
